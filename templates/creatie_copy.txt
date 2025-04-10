@@ -1,0 +1,144 @@
+<!DOCTYPE html><html lang="ko"><head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>청소 관리 대시보드</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://ai-public.creatie.ai/gen_page/tailwind-custom-v2.css" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com/3.4.5?plugins=forms@0.5.7,typography@0.5.13,aspect-ratio@0.4.2,container-queries@0.1.1"></script>
+    <script src="https://ai-public.creatie.ai/gen_page/tailwind-config.min.js" data-color="#000000" data-border-radius="small"></script>
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .calendar-day { min-height: 80px; }
+        .calendar-grid { grid-template-columns: repeat(7, 1fr); }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="max-w-[375px] mx-auto min-h-screen pb-16">
+        <header class="sticky top-0 z-50 bg-white border-b border-gray-200">
+            <div class="px-4 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-broom text-custom text-xl"></i>
+                    <h1 class="text-lg font-bold">청소 관리 대시보드</h1>
+                </div>
+                <button class="p-2 text-gray-600">
+                    <i class="fas fa-bell"></i>
+                </button>
+            </div>
+        </header>
+        <main class="px-4 py-4 space-y-6">
+            <section class="bg-white rounded-lg p-4 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="font-bold">2024년 2월</h2>
+                    <div class="flex gap-2">
+                        <button class="p-2 text-gray-600"><i class="fas fa-chevron-left"></i></button>
+                        <button class="p-2 text-gray-600"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
+                <div class="grid calendar-grid gap-1 text-center text-sm">
+                    <div class="text-gray-500">일</div>
+                    <div class="text-gray-500">월</div>
+                    <div class="text-gray-500">화</div>
+                    <div class="text-gray-500">수</div>
+                    <div class="text-gray-500">목</div>
+                    <div class="text-gray-500">금</div>
+                    <div class="text-gray-500">토</div>
+                    
+                    <div class="calendar-day p-1 text-gray-400">28</div>
+                    <div class="calendar-day p-1 text-gray-400">29</div>
+                    <div class="calendar-day p-1 text-gray-400">30</div>
+                    <div class="calendar-day p-1 text-gray-400">31</div>
+                    <div class="calendar-day p-1">1</div>
+                    <div class="calendar-day p-1">2</div>
+                    <div class="calendar-day p-1">3</div>
+                    
+                    <div class="calendar-day p-1">4</div>
+                    <div class="calendar-day p-1">5</div>
+                    <div class="calendar-day p-1">6</div>
+                    <div class="calendar-day p-1">7</div>
+                    <div class="calendar-day p-1">8</div>
+                    <div class="calendar-day p-1">9</div>
+                    <div class="calendar-day p-1">10</div>
+                    
+                    <div class="calendar-day p-1">11</div>
+                    <div class="calendar-day p-1">12</div>
+                    <div class="calendar-day p-1">13</div>
+                    <div class="calendar-day p-1 bg-custom/5 rounded-lg">
+                        <div class="font-bold">14</div>
+                        <div class="text-custom text-xs mt-1">애숙</div>
+                        <div class="text-gray-500 text-xs">3명</div>
+                    </div>
+                    <div class="calendar-day p-1">15</div>
+                    <div class="calendar-day p-1 bg-custom/5 rounded-lg">
+                        <div class="font-bold">16</div>
+                        <div class="text-custom text-xs mt-1">미영</div>
+                        <div class="text-gray-500 text-xs">2명</div>
+                    </div>
+                    <div class="calendar-day p-1">17</div>
+                </div>
+            </section>
+            <section class="bg-white rounded-lg p-4 shadow-sm">
+                <h2 class="font-bold mb-3">미배정 청소 일정</h2>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between p-3 border border-red-200 rounded-lg bg-red-50">
+                        <div>
+                            <p class="font-medium">2월 18일 (일) 오후 2:00</p>
+                            <p class="text-sm text-gray-600">예약자 3명</p>
+                        </div>
+                        <span class="px-3 py-1.5 bg-custom text-white text-sm rounded-lg hover:bg-custom/90">신청하기</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                        <div>
+                            <p class="font-medium">2월 20일 (화) 오전 10:00</p>
+                            <p class="text-sm text-gray-600">예약자 2명</p>
+                        </div>
+                        <span class="px-3 py-1.5 bg-custom text-white text-sm rounded-lg hover:bg-custom/90">신청하기</span>
+                    </div>
+                </div>
+            </section>
+            <section class="bg-white rounded-lg p-4 shadow-sm">
+                <div class="flex items-center gap-4 mb-4">
+                    <button class="flex-1 py-2 text-center bg-custom text-white !rounded-button">이번 주</button>
+                    <button class="flex-1 py-2 text-center border border-gray-200 !rounded-button">다음 주</button>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                        <div>
+                            <p class="font-medium">2월 14일 (수) 오후 3:00</p>
+                            <p class="text-sm text-gray-600">예약자 4명</p>
+                            <p class="text-sm text-custom">담당: 애숙</p>
+                        </div>
+                        <input type="checkbox" class="w-5 h-5 rounded text-custom"/>
+                    </div>
+                    <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                        <div>
+                            <p class="font-medium">2월 16일 (금) 오전 11:00</p>
+                            <p class="text-sm text-gray-600">예약자 3명</p>
+                            <p class="text-sm text-custom">담당: 미영</p>
+                        </div>
+                        <input type="checkbox" class="w-5 h-5 rounded text-custom"/>
+                    </div>
+                </div>
+            </section>
+        </main>
+        <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200">
+            <div class="grid grid-cols-4 gap-1 px-2 py-2">
+                <a href="#" class="flex flex-col items-center p-2 text-custom">
+                    <i class="fas fa-home text-lg"></i>
+                    <span class="text-xs mt-1">홈</span>
+                </a>
+                <a href="#" class="flex flex-col items-center p-2 text-gray-500">
+                    <i class="fas fa-calendar text-lg"></i>
+                    <span class="text-xs mt-1">캘린더</span>
+                </a>
+                <a href="#" class="flex flex-col items-center p-2 text-gray-500">
+                    <i class="fas fa-plus-circle text-lg"></i>
+                    <span class="text-xs mt-1">등록</span>
+                </a>
+                <a href="#" class="flex flex-col items-center p-2 text-gray-500">
+                    <i class="fas fa-cog text-lg"></i>
+                    <span class="text-xs mt-1">설정</span>
+                </a>
+            </div>
+        </nav>
+    </div>

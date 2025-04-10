@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>청소 관리 대시보드</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { 
+            font-family: 'Noto Sans KR', sans-serif; 
+            background-color: #F3F4F6;
+            display: flex;
+            justify-content: center;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        .container {
+            width: 100% !important; /* Tailwind CSS 우선순위 override */
+            max-width: 600px !important; /* Tailwind CSS 우선순위 override */
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            height: 100%;
+            position: relative;
+            padding-bottom: 60px; /* 네비게이션 바 높이만큼 여백 */
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+            padding: 12px;
+            background: white;
+            border-radius: 12px;
+        }
+        .day-header {
+            text-align: center;
+            font-weight: 500;
+            color: #6B7280;
+            padding: 4px;
+            font-size: 14px;
+        }
+        .day-card {
+            padding: 6px 2px;
+            text-align: center;
+            background-color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .day-card:hover {
+            background-color: #E5E7EB;
+        }
+        .highlighted-day {
+            background-color: #F3F4F6;
+            border: 1px solid #D1D5DB;
+        }
+        .selected-day {
+            background-color: #60A5FA;
+            color: white;
+        }
+        .current-day {
+            background-color: #FEF3C7;
+        }
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: white;
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-top: 1px solid #E5E7EB;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #6B7280;
+            padding: 4px 0;
+            width: 50%;
+            font-size: 12px;
+        }
+        .nav-item.active {
+            color: #3B82F6;
+        }
+        .nav-item i {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+        .task-card {
+            background-color: white;
+            border: 1px solid #E5E7EB;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .badge {
+            background-color: #EF4444;
+            color: white;
+            border-radius: 9999px;
+            font-size: 10px;
+            padding: 2px 6px;
+            margin-left: 5px;
+            display: inline-block;
+        }
+        .tab {
+            padding: 10px 20px;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+        }
+        .tab.active {
+            border-bottom-color: #3B82F6;
+            color: #3B82F6;
+            font-weight: 500;
+        }
+        .page-content {
+            padding-bottom: 70px;
+        }
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            margin-top: 5px;
+            background-color: white;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 10;
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .dropdown-content a {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            font-size: 14px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .dropdown-content a:last-child {
+            border-bottom: none;
+        }
+        .dropdown-content a:hover {
+            background-color: #F3F4F6;
+            border-radius: 8px;
+        }
+        .show {
+            display: block;
+        }
+        .schedule-view {
+            display: none;
+        }
+        .schedule-view.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="sticky top-0 z-50 bg-white border-b border-gray-200 p-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <i class="fas fa-broom text-xl"></i>
+                <h1 class="text-lg font-bold">청소 관리 대시보드</h1>
+            </div>
+            <button><i class="fas fa-bell"></i></button>
+        </header>
+
+        <main class="page-content p-4 space-y-6">
+            <!-- 홈 뷰 -->
+            <div id="home-view" class="schedule-view active">
+                <!-- 캘린더 섹션 -->
+                <section class="bg-white rounded-lg p-4 shadow">
+                    <div class="flex justify-between items-center mb-4">
+                        <button id="prev-month" class="text-gray-500"><i class="fas fa-chevron-left"></i></button>
+                        <h2 class="font-bold text-lg" id="month-title">2024년 2월</h2>
+                        <button id="next-month" class="text-gray-500"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                    
+                    <!-- 요일 헤더 -->
+                    <div class="calendar-grid mb-2">
+                        <div class="day-header">일</div>
+                        <div class="day-header">월</div>
+                        <div class="day-header">화</div>
+                        <div class="day-header">수</div>
+                        <div class="day-header">목</div>
+                        <div class="day-header">금</div>
+                        <div class="day-header">토</div>
+                    </div>
+                    
+                    <div class="calendar-grid" id="calendar-days"></div>
+                </section>
+                
+                <!-- 미배정 청소 일정 섹션 -->
+                <section class="bg-white rounded-lg p-4 shadow">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="font-bold text-lg">
+                            미배정 청소 일정 <span id="unassigned-badge" class="badge">0</span>
+                        </h2>
+                        <button id="refresh-unassigned" class="text-blue-500">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                    
+                    <div id="unassigned-list" class="space-y-3 max-h-60 overflow-y-auto">
+                        <!-- 미배정 청소 일정이 여기에 동적으로 추가됨 -->
+                    </div>
+                </section>
+                
+                <!-- 주간 청소 일정 섹션 -->
+                <section class="bg-white rounded-lg p-4 shadow">
+                    <h2 class="font-bold text-lg mb-4">주간 청소 일정</h2>
+                    
+                    <div class="flex border-b mb-4">
+                        <div id="tab-this-week" class="tab active">이번 주</div>
+                        <div id="tab-next-week" class="tab">다음 주</div>
+                    </div>
+                    
+                    <div id="this-week-list" class="space-y-3 max-h-60 overflow-y-auto">
+                        <!-- 이번 주 일정이 여기에 동적으로 추가됨 -->
+                    </div>
+                    
+                    <div id="next-week-list" class="space-y-3 max-h-60 overflow-y-auto hidden">
+                        <!-- 다음 주 일정이 여기에 동적으로 추가됨 -->
+                    </div>
+                </section>
+            </div>
+            
+            <!-- 전체 청소 일정 뷰 -->
+            <div id="schedule-view" class="schedule-view">
+                <section class="bg-white rounded-lg p-4 shadow">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="font-bold text-lg">전체 청소 일정</h2>
+                        <button id="refresh-all-schedules" class="text-blue-500">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                    
+                    <div id="all-schedules-list" class="space-y-3 max-h-screen overflow-y-auto">
+                        <!-- 전체 청소 일정이 여기에 동적으로 추가됨 -->
+                    </div>
+                </section>
+            </div>
+        </main>
+        
+        <!-- 하단 네비게이션 바 -->
+        <nav class="nav-bar">
+            <a href="#" class="nav-item active" id="nav-home">
+                <i class="fas fa-home"></i>
+                <span>홈</span>
+            </a>
+            <a href="#" class="nav-item" id="nav-schedule">
+                <i class="fas fa-calendar"></i>
+                <span>청소일정</span>
+            </a>
+        </nav>
+    </div>
+
+    <script>
+        // 오늘 날짜 가져오기
+        const today = new Date();
+        let currentYear = today.getFullYear();
+        let currentMonth = today.getMonth() + 1; // JavaScript에서는 월이 0부터 시작
+        let cleanerOptions = []; // 청소 담당자 옵션 저장
+        
+        // 초기화
+        document.getElementById('month-title').innerText = `${currentYear}년 ${currentMonth}월`;
+        
+        // 이전/다음 달 버튼 이벤트
+        document.getElementById('prev-month').addEventListener('click', () => changeMonth(-1));
+        document.getElementById('next-month').addEventListener('click', () => changeMonth(1));
+        
+        // 탭 전환 이벤트
+        document.getElementById('tab-this-week').addEventListener('click', () => switchTab('this-week'));
+        document.getElementById('tab-next-week').addEventListener('click', () => switchTab('next-week'));
+        
+        // 새로고침 버튼 이벤트
+        document.getElementById('refresh-unassigned').addEventListener('click', fetchUnassignedTasks);
+        document.getElementById('refresh-all-schedules').addEventListener('click', fetchAllSchedules);
+        
+        // 네비게이션 바 이벤트
+        document.getElementById('nav-home').addEventListener('click', () => switchView('home'));
+        document.getElementById('nav-schedule').addEventListener('click', () => switchView('schedule'));
+        
+        // 페이지 로드 시 데이터 가져오기
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchCalendarData();
+            fetchUnassignedTasks();
+            fetchWeeklySchedule();
+            fetchCleanerOptions();
+            fetchAllSchedules();
+        });
+        
+        function changeMonth(direction) {
+            currentMonth += direction;
+            if (currentMonth < 1) {
+                currentMonth = 12;
+                currentYear--;
+            } else if (currentMonth > 12) {
+                currentMonth = 1;
+                currentYear++;
+            }
+            document.getElementById('month-title').innerText = `${currentYear}년 ${currentMonth}월`;
+            fetchCalendarData();
+        }
+        
+        function switchTab(tabId) {
+            if (tabId === 'this-week') {
+                document.getElementById('tab-this-week').classList.add('active');
+                document.getElementById('tab-next-week').classList.remove('active');
+                document.getElementById('this-week-list').classList.remove('hidden');
+                document.getElementById('next-week-list').classList.add('hidden');
+            } else {
+                document.getElementById('tab-this-week').classList.remove('active');
+                document.getElementById('tab-next-week').classList.add('active');
+                document.getElementById('this-week-list').classList.add('hidden');
+                document.getElementById('next-week-list').classList.remove('hidden');
+            }
+        }
+        
+        function switchView(viewId) {
+            // 네비게이션 버튼 상태 업데이트
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            document.getElementById(`nav-${viewId}`).classList.add('active');
+            
+            // 뷰 전환
+            document.querySelectorAll('.schedule-view').forEach(view => view.classList.remove('active'));
+            document.getElementById(`${viewId}-view`).classList.add('active');
+            
+            // 필요한 데이터 새로고침
+            if (viewId === 'schedule') {
+                fetchAllSchedules();
+            }
+        }
+        
+        async function fetchCalendarData() {
+            try {
+                const response = await fetch(`/api/calendar?year=${currentYear}&month=${currentMonth}`);
+                const data = await response.json();
+                renderCalendar(data);
+            } catch (error) {
+                console.error('캘린더 데이터 로드 오류:', error);
+            }
+        }
+        
+        async function fetchUnassignedTasks() {
+            try {
+                const response = await fetch('/api/unassigned');
+                const tasks = await response.json();
+                renderUnassignedTasks(tasks);
+            } catch (error) {
+                console.error('미배정 일정 로드 오류:', error);
+            }
+        }
+        
+        async function fetchWeeklySchedule() {
+            try {
+                const response = await fetch('/api/weekly');
+                const schedules = await response.json();
+                renderWeeklySchedule(schedules);
+            } catch (error) {
+                console.error('주간 일정 로드 오류:', error);
+            }
+        }
+        
+        async function fetchCleanerOptions() {
+            try {
+                const response = await fetch('/api/cleaners');
+                cleanerOptions = await response.json();
+            } catch (error) {
+                console.error('청소 담당자 목록 로드 오류:', error);
+            }
+        }
+        
+        async function fetchAllSchedules() {
+            try {
+                const response = await fetch('/api/all-schedules');
+                const schedules = await response.json();
+                renderAllSchedules(schedules);
+            } catch (error) {
+                console.error('전체 일정 로드 오류:', error);
+            }
+        }
+        
+        function renderCalendar(calendarData) {
+            const daysContainer = document.getElementById('calendar-days');
+            daysContainer.innerHTML = "";
+            
+            // 해당 월의 첫 날의 요일 (0: 일요일, 1: 월요일, ...)
+            const firstDay = new Date(currentYear, currentMonth - 1, 1).getDay();
+            
+            // 해당 월의 마지막 날짜
+            const lastDate = new Date(currentYear, currentMonth, 0).getDate();
+            
+            // 이전 달의 날짜 채우기 (비어있는 셀)
+            for (let i = 0; i < firstDay; i++) {
+                daysContainer.innerHTML += `<div></div>`;
+            }
+            
+            // 날짜 채우기
+            for (let day = 1; day <= lastDate; day++) {
+                const dateString = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dateData = calendarData.data[dateString];
+                
+                let className = "day-card";
+                
+                // 오늘 날짜 하이라이트
+                if (currentYear === today.getFullYear() && 
+                    currentMonth === today.getMonth() + 1 && 
+                    day === today.getDate()) {
+                    className += " current-day";
+                }
+                
+                if (dateData) {
+                    // 청소 일정이 있는 날짜
+                    daysContainer.innerHTML += `
+                        <div class="${className} highlighted-day" data-date="${dateString}">
+                            <div class="font-bold">${day}</div>
+                            ${dateData.cleaner ? `<div class="text-sm ${dateData.status === '완료' ? 'text-green-500' : 'text-blue-500'}">${dateData.cleaner}</div>` : ''}
+                            ${dateData.people ? `<div class="text-xs text-gray-500">${dateData.people}명</div>` : ''}
+                        </div>
+                    `;
+                } else {
+                    // 일정 없는 날짜
+                    daysContainer.innerHTML += `<div class="${className}" data-date="${dateString}">${day}</div>`;
+                }
+            }
+            
+            // 날짜 클릭 이벤트
+            document.querySelectorAll('.day-card[data-date]').forEach(dayCard => {
+                dayCard.addEventListener('click', () => {
+                    const date = dayCard.getAttribute('data-date');
+                    showDateDetails(date);
+                });
+            });
+        }
+        
+        function renderUnassignedTasks(tasks) {
+            const unassignedList = document.getElementById('unassigned-list');
+            unassignedList.innerHTML = "";
+            
+            // 배지 업데이트
+            document.getElementById('unassigned-badge').textContent = tasks.length;
+            
+            if (tasks.length === 0) {
+                unassignedList.innerHTML = `
+                    <div class="text-center text-gray-500 py-4">
+                        미배정된 청소 일정이 없습니다.
+                    </div>
+                `;
+                return;
+            }
+            
+            tasks.forEach(task => {
+                unassignedList.innerHTML += `
+                    <div class="task-card" data-date="${task.date}" data-page-id="${task.page_id}">
+                        <div>
+                            <div class="font-medium">${task.formatted_date}</div>
+                            <div class="text-sm text-gray-500">예약자 ${task.people}명</div>
+                        </div>
+                        <button class="bg-black text-white px-4 py-2 rounded-md text-sm assign-modal-open" 
+                                data-date="${task.date}" data-page-id="${task.page_id}">
+                            신청하기
+                        </button>
+                    </div>
+                `;
+            });
+            
+            // 신청하기 버튼 이벤트 - 모달 방식으로 변경
+            document.querySelectorAll('.assign-modal-open').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const date = btn.getAttribute('data-date');
+                    const pageId = btn.getAttribute('data-page-id');
+                    
+                    // 모달 생성
+                    const modal = document.createElement('div');
+                    modal.className = 'fixed inset-0 bg-gray-500 bg-opacity-50 z-50 flex justify-center items-center';
+                    modal.id = 'cleaner-modal';
+                    
+                    let modalContent = `
+                        <div class="bg-white rounded-lg p-5 max-w-md w-full mx-4">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-bold">청소 담당자 선택</h3>
+                                <button class="text-gray-400 hover:text-gray-600 modal-close">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="mb-4">담당자로 배정할 이름을 선택해주세요.</div>
+                            <div class="grid grid-cols-2 gap-2">
+                    `;
+                    
+                    cleanerOptions.forEach(option => {
+                        modalContent += `
+                            <button class="border border-gray-300 rounded-md py-2 px-3 hover:bg-gray-100 cleaner-select"
+                                    data-name="${option.name}" data-date="${date}" data-page-id="${pageId}">
+                                ${option.name}
+                            </button>
+                        `;
+                    });
+                    
+                    modalContent += `
+                            </div>
+                        </div>
+                    `;
+                    
+                    modal.innerHTML = modalContent;
+                    document.body.appendChild(modal);
+                    
+                    // 모달 닫기 이벤트
+                    modal.querySelector('.modal-close').addEventListener('click', () => {
+                        document.body.removeChild(modal);
+                    });
+                    
+                    // 배경 클릭 시 닫기
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) {
+                            document.body.removeChild(modal);
+                        }
+                    });
+                    
+                    // 청소 담당자 선택 이벤트
+                    modal.querySelectorAll('.cleaner-select').forEach(option => {
+                        option.addEventListener('click', async () => {
+                            const cleaner = option.getAttribute('data-name');
+                            const cleaningDate = option.getAttribute('data-date');
+                            
+                            // 확인 단계 모달로 변경
+                            const confirmContent = `
+                                <div class="bg-white rounded-lg p-5 max-w-md w-full mx-4">
+                                    <div class="flex justify-between items-center mb-4">
+                                        <h3 class="text-lg font-bold">청소 담당자 배정 확인</h3>
+                                        <button class="text-gray-400 hover:text-gray-600 modal-close">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                    <div class="mb-6 text-center">
+                                        <p class="mb-2">다음 내용으로 담당자를 배정합니다:</p>
+                                        <div class="font-medium text-lg mb-1">${cleaner}</div>
+                                        <div class="text-gray-500">담당 날짜: <span class="font-medium">${formatDateFromIso(cleaningDate)}</span></div>
+                                    </div>
+                                    <div class="flex justify-between space-x-3">
+                                        <button class="w-1/2 py-2 px-4 border border-gray-300 rounded-md modal-cancel">
+                                            취소
+                                        </button>
+                                        <button class="w-1/2 py-2 px-4 bg-black text-white rounded-md modal-confirm">
+                                            확인
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                            
+                            modal.innerHTML = confirmContent;
+                            
+                            // 취소 버튼
+                            modal.querySelector('.modal-cancel').addEventListener('click', () => {
+                                document.body.removeChild(modal);
+                            });
+                            
+                            // 닫기 버튼
+                            modal.querySelector('.modal-close').addEventListener('click', () => {
+                                document.body.removeChild(modal);
+                            });
+                            
+                            // 확인 버튼 - 실제 배정 처리
+                            modal.querySelector('.modal-confirm').addEventListener('click', async () => {
+                                try {
+                                    // 배정 진행 중 UI 표시
+                                    const loadingContent = `
+                                        <div class="bg-white rounded-lg p-5 max-w-md w-full mx-4">
+                                            <div class="text-center mb-4">
+                                                <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mb-3"></div>
+                                                <h3 class="text-lg font-bold">배정 중...</h3>
+                                            </div>
+                                            <div class="text-center mb-4">
+                                                청소 담당자 배정을 진행하고 있습니다.
+                                            </div>
+                                        </div>
+                                    `;
+                                    modal.innerHTML = loadingContent;
+                                    
+                                    const response = await fetch('/api/assign', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify({
+                                            date: cleaningDate,
+                                            name: cleaner
+                                        })
+                                    });
+                                    
+                                    const result = await response.json();
+                                    if (result.success) {
+                                        // 모달 내용 변경 - 성공 메시지
+                                        const successContent = `
+                                            <div class="bg-white rounded-lg p-5 max-w-md w-full mx-4">
+                                                <div class="text-center mb-4">
+                                                    <i class="fas fa-check-circle text-green-500 text-5xl mb-3"></i>
+                                                    <h3 class="text-lg font-bold">배정 완료</h3>
+                                                </div>
+                                                <div class="text-center mb-4">
+                                                    ${cleaner} 님이 청소 담당자로 배정되었습니다!
+                                                </div>
+                                                <div class="text-center">
+                                                    <button class="bg-black text-white px-4 py-2 rounded-md modal-close">
+                                                        확인
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        `;
+                                        modal.innerHTML = successContent;
+                                        
+                                        // 확인 버튼 이벤트
+                                        modal.querySelector('.modal-close').addEventListener('click', () => {
+                                            document.body.removeChild(modal);
+                                        });
+                                        
+                                        // 데이터 새로고침
+                                        fetchUnassignedTasks();
+                                        fetchCalendarData();
+                                        fetchWeeklySchedule();
+                                        fetchAllSchedules();
+                                    } else {
+                                        // 오류 메시지
+                                        const errorContent = `
+                                            <div class="bg-white rounded-lg p-5 max-w-md w-full mx-4">
+                                                <div class="text-center mb-4">
+                                                    <i class="fas fa-exclamation-circle text-red-500 text-5xl mb-3"></i>
+                                                    <h3 class="text-lg font-bold">오류 발생</h3>
+                                                </div>
+                                                <div class="text-center mb-4">
+                                                    배정 중 오류가 발생했습니다. 다시 시도해주세요.
+                                                </div>
+                                                <div class="text-center">
+                                                    <button class="bg-black text-white px-4 py-2 rounded-md modal-close">
+                                                        확인
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        `;
+                                        modal.innerHTML = errorContent;
+                                        
+                                        // 확인 버튼 이벤트
+                                        modal.querySelector('.modal-close').addEventListener('click', () => {
+                                            document.body.removeChild(modal);
+                                        });
+                                    }
+                                } catch (error) {
+                                    console.error('배정 오류:', error);
+                                    // 오류 메시지
+                                    const errorContent = `
+                                        <div class="bg-white rounded-lg p-5 max-w-md w-full mx-4">
+                                            <div class="text-center mb-4">
+                                                <i class="fas fa-exclamation-circle text-red-500 text-5xl mb-3"></i>
+                                                <h3 class="text-lg font-bold">오류 발생</h3>
+                                            </div>
+                                            <div class="text-center mb-4">
+                                                배정 중 오류가 발생했습니다. 다시 시도해주세요.
+                                            </div>
+                                            <div class="text-center">
+                                                <button class="bg-black text-white px-4 py-2 rounded-md modal-close">
+                                                    확인
+                                                </button>
+                                            </div>
+                                        </div>
+                                    `;
+                                    modal.innerHTML = errorContent;
+                                    
+                                    // 확인 버튼 이벤트
+                                    modal.querySelector('.modal-close').addEventListener('click', () => {
+                                        document.body.removeChild(modal);
+                                    });
+                                }
+                            });
+                        });
+                    });
+                });
+            });
+        }
+        
+        function renderWeeklySchedule(schedules) {
+            const thisWeekList = document.getElementById('this-week-list');
+            const nextWeekList = document.getElementById('next-week-list');
+            
+            thisWeekList.innerHTML = "";
+            nextWeekList.innerHTML = "";
+            
+            if (schedules.this_week.length === 0) {
+                thisWeekList.innerHTML = `
+                    <div class="text-center text-gray-500 py-4">
+                        이번 주 청소 일정이 없습니다.
+                    </div>
+                `;
+            } else {
+                schedules.this_week.forEach(item => {
+                    thisWeekList.innerHTML += createScheduleItem(item);
+                });
+            }
+            
+            if (schedules.next_week.length === 0) {
+                nextWeekList.innerHTML = `
+                    <div class="text-center text-gray-500 py-4">
+                        다음 주 청소 일정이 없습니다.
+                    </div>
+                `;
+            } else {
+                schedules.next_week.forEach(item => {
+                    nextWeekList.innerHTML += createScheduleItem(item);
+                });
+            }
+        }
+        
+        function renderAllSchedules(schedules) {
+            const allSchedulesList = document.getElementById('all-schedules-list');
+            allSchedulesList.innerHTML = "";
+            
+            if (schedules.length === 0) {
+                allSchedulesList.innerHTML = `
+                    <div class="text-center text-gray-500 py-4">
+                        청소 일정이 없습니다.
+                    </div>
+                `;
+                return;
+            }
+            
+            schedules.forEach(item => {
+                allSchedulesList.innerHTML += createScheduleItem(item);
+            });
+        }
+        
+        function createScheduleItem(item) {
+            return `
+                <div class="task-card" data-date="${item.date}" data-page-id="${item.page_id}">
+                    <div class="flex items-center">
+                        <input type="checkbox" class="mr-3 h-5 w-5" ${item.completed ? 'checked' : ''}>
+                        <div>
+                            <div class="font-medium">${item.formatted_date}</div>
+                            <div class="text-sm ${item.cleaner === '미지정' ? 'text-red-500' : 'text-blue-500'}">
+                                ${item.cleaner} (예약자 ${item.people}명)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function showDateDetails(date) {
+            console.log(`날짜 상세 정보: ${date}`);
+            // 여기에 날짜 상세 정보 표시 로직 구현
+            // 모달이나 다른 UI 요소를 통해 표시할 수 있음
+        }
+
+        // ISO 날짜 문자열을 사용자 친화적인 형식으로 변환하는 함수
+        function formatDateFromIso(isoDate) {
+            const date = new Date(isoDate);
+            const year = date.getFullYear() % 100; // 년도의 마지막 두 자리
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            
+            const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+            const weekday = weekdays[date.getDay()];
+            
+            return `${year}년 ${month}월 ${day}일 (${weekday})`;
+        }
+    </script>
+</body>
+</html>
