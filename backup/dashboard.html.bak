@@ -119,12 +119,6 @@
             margin-left: 5px;
             display: inline-block;
         }
-        .badge-warning {
-            background-color: #F59E0B;
-        }
-        .badge-success {
-            background-color: #10B981;
-        }
         .tab {
             padding: 10px 20px;
             border-bottom: 2px solid transparent;
@@ -371,17 +365,8 @@
         
         async function fetchUnassignedTasks() {
             try {
-                console.log("미배정 청소 일정 가져오기 API 호출 시작");
                 const response = await fetch('/api/unassigned');
-                console.log("API 응답 상태:", response.status, response.statusText);
-                
-                if (!response.ok) {
-                    throw new Error(`API 응답 오류: ${response.status} ${response.statusText}`);
-                }
-                
                 const tasks = await response.json();
-                console.log("DEBUG - 받은 미배정 일정 개수:", tasks.length);
-                console.log("DEBUG - 미배정 일정 데이터:", JSON.stringify(tasks));
                 updateUnassignedList(tasks);
             } catch (error) {
                 console.error('미배정 일정 로드 오류:', error);
@@ -781,23 +766,15 @@
                                 
                                 const result = await response.json();
                                 if (result.success) {
-                                    // 부분 배정(1명만 배정)인 경우와 완전 배정(모든 담당자 배정 완료)인 경우 구분
-                                    const isPartialAssignment = result.partial === true;
-                                    const successIconClass = isPartialAssignment ? "text-yellow-500" : "text-green-500";
-                                    const successTitle = isPartialAssignment ? "부분 배정 완료" : "배정 완료";
-                                    const successMessage = isPartialAssignment 
-                                        ? result.message || `${cleaner} 님이 첫 번째 담당자로 배정되었습니다. 추가 담당자 배정이 필요합니다.`
-                                        : `${cleaner} 님이 청소 담당자로 배정되었습니다!`;
-                                    
                                     // 모달 내용 변경 - 성공 메시지
                                     const successContent = `
                                         <div class="bg-white rounded-lg p-5 max-w-md w-full mx-4">
                                             <div class="text-center mb-4">
-                                                <i class="fas fa-check-circle ${successIconClass} text-5xl mb-3"></i>
-                                                <h3 class="text-lg font-bold">${successTitle}</h3>
+                                                <i class="fas fa-check-circle text-green-500 text-5xl mb-3"></i>
+                                                <h3 class="text-lg font-bold">배정 완료</h3>
                                             </div>
                                             <div class="text-center mb-4">
-                                                ${successMessage}
+                                                ${cleaner} 님이 청소 담당자로 배정되었습니다!
                                             </div>
                                             <div class="text-center">
                                                 <button class="bg-black text-white px-4 py-2 rounded-md modal-close">
@@ -881,30 +858,7 @@
         // 미배정 청소 일정 업데이트
         function updateUnassignedList(tasks) {
             const unassignedList = document.getElementById('unassigned-list');
-            if (!unassignedList) {
-                console.error("DEBUG - unassignedList 요소를 찾을 수 없습니다.");
-                return;
-            }
-            
-            // 뱃지 업데이트
-            const unassignedBadge = document.getElementById('unassigned-badge');
-            if (unassignedBadge) {
-                console.log(`DEBUG - 뱃지 업데이트: ${tasks.length}`);
-                unassignedBadge.textContent = tasks.length;
-                
-                // 뱃지 가시성 설정
-                if (tasks.length > 0) {
-                    console.log("DEBUG - 뱃지 표시 (0보다 큰 값)");
-                    unassignedBadge.style.display = 'inline-block';
-                    unassignedBadge.classList.add('badge-warning');
-                } else {
-                    console.log("DEBUG - 뱃지 숨김 또는 기본 색상으로 변경 (0개)");
-                    unassignedBadge.style.display = 'inline-block';
-                    unassignedBadge.classList.remove('badge-warning');
-                }
-            } else {
-                console.error("DEBUG - unassignedBadge 요소를 찾을 수 없습니다.");
-            }
+            if (!unassignedList) return;
             
             if (tasks.length === 0) {
                 unassignedList.innerHTML = `
@@ -919,31 +873,14 @@
             let taskHtml = '';
             tasks.forEach(task => {
                 const needsTwoCleaners = task.people >= 7;
-                
-                // 현재 배정된 담당자 확인을 위한 추가 작업
-                let assignmentStatusInfo = "";
-                if (needsTwoCleaners) {
-                    if (task.current_assigned && task.current_assigned.length > 0) {
-                        assignmentStatusInfo = `
-                            <span class="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full ml-1">
-                                1명 배정됨 (${task.current_assigned})
-                            </span>`;
-                    } else {
-                        assignmentStatusInfo = `
-                            <span class="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded-full">
-                                담당자 2명 필요
-                            </span>`;
-                    }
-                }
-                
+                const extraInfo = needsTwoCleaners ? 
+                    `<span class="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded-full">담당자 2명 필요</span>` : '';
+                    
                 taskHtml += `
                     <div class="task-card mb-3">
                         <div>
                             <div class="font-medium">${task.formatted_date}</div>
-                            <div class="text-gray-500 text-sm">
-                                예약 ${task.people}명 
-                                ${assignmentStatusInfo}
-                            </div>
+                            <div class="text-gray-500 text-sm">예약 ${task.people}명 ${extraInfo}</div>
                         </div>
                         <button class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 assign-cleaner-btn"
                                 data-date="${task.date}" data-page-id="${task.page_id}" data-people="${task.people}">
