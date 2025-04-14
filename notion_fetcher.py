@@ -149,9 +149,9 @@ def get_unassigned_cleaning_tasks():
     
     # 노션 API 필터 정보 확인
     filter_json = {
-        "property": "상태",
-        "status": {
-            "equals": "청소 배정 필요"
+        "property": "청소 담당자",
+        "multi_select": {
+            "is_empty": True
         }
     }
     print(f"사용하는 필터: {filter_json}")
@@ -184,7 +184,7 @@ def get_unassigned_cleaning_tasks():
         print(f"데이터베이스 내 모든 상태값 분포: {all_statuses}")
         
         # 필터링된 쿼리 실행
-        print("'청소 배정 필요' 상태 항목 조회 중...")
+        print("'청소 배정 필요' 상태이면서 담당자가 없는 항목 조회 중...")
         response = notion.databases.query(
             database_id=DATABASE_ID,
             filter=filter_json,
@@ -197,33 +197,6 @@ def get_unassigned_cleaning_tasks():
         )
         
         print(f"노션 API 응답: 총 {len(response['results'])}개 일정 조회됨")
-        
-        # 결과가 없으면 필터를 변경하여 재시도
-        if len(response['results']) == 0:
-            print("'청소 배정 필요' 상태의 항목이 없음. 다른 필터로 재시도 중...")
-            # 가장 많은 항목을 가진 상태값 찾기
-            most_common_status = max(all_statuses.items(), key=lambda x: x[1], default=("", 0))[0]
-            
-            if most_common_status and most_common_status != "없음":
-                print(f"가장 많은 항목을 가진 상태값 '{most_common_status}'로 재시도")
-                filter_json = {
-                    "property": "상태",
-                    "status": {
-                        "equals": most_common_status
-                    }
-                }
-                
-                response = notion.databases.query(
-                    database_id=DATABASE_ID,
-                    filter=filter_json,
-                    sorts=[
-                        {
-                            "property": "청소 일정",
-                            "direction": "ascending"
-                        }
-                    ]
-                )
-                print(f"재시도 결과: 총 {len(response['results'])}개 일정 조회됨")
         
         tasks = []
         for page in response["results"]:
