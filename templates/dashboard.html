@@ -892,15 +892,17 @@
                 console.log(`DEBUG - 뱃지 업데이트: ${tasks.length}`);
                 unassignedBadge.textContent = tasks.length;
                 
-                // 뱃지 가시성 설정
+                // 뱃지 가시성 및 스타일 설정
                 if (tasks.length > 0) {
                     console.log("DEBUG - 뱃지 표시 (0보다 큰 값)");
                     unassignedBadge.style.display = 'inline-block';
+                    unassignedBadge.classList.remove('badge-success');
                     unassignedBadge.classList.add('badge-warning');
                 } else {
                     console.log("DEBUG - 뱃지 숨김 또는 기본 색상으로 변경 (0개)");
                     unassignedBadge.style.display = 'inline-block';
                     unassignedBadge.classList.remove('badge-warning');
+                    unassignedBadge.classList.add('badge-success');
                 }
             } else {
                 console.error("DEBUG - unassignedBadge 요소를 찾을 수 없습니다.");

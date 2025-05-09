@@ -143,51 +143,17 @@ def get_notion_calendar_data(year=None, month=None):
 
 # 미배정 청소 일정 가져오기
 def get_unassigned_cleaning_tasks():
-    print("\n===== 미배정 청소 일정 가져오기 시작 =====")
-    print(f"노션 TOKEN 체크: {NOTION_TOKEN[:5]}...")
-    print(f"노션 DATABASE_ID 체크: {DATABASE_ID}")
-    
-    # 노션 API 필터 정보 확인
-    filter_json = {
-        "property": "청소 담당자",
-        "multi_select": {
-            "is_empty": True
-        }
-    }
-    print(f"사용하는 필터: {filter_json}")
+    print("\n===== 미배정 청소 일정 가져오기 시작 (상태 기반 필터) =====")
     
     try:
-        # 먼저 모든 상태값 확인을 위한 쿼리
-        print("전체 데이터베이스 항목 조회 중...")
-        all_response = notion.databases.query(
-            database_id=DATABASE_ID,
-            page_size=100  # 최대 100개 항목 가져오기
-        )
-        
-        print(f"전체 데이터베이스 항목 개수: {len(all_response['results'])}")
-        
-        # 상태 프로퍼티 분석
-        all_statuses = {}
-        for page in all_response["results"]:
-            status_obj = page["properties"].get("상태", {})
-            status_type = status_obj.get("type", "없음")
-            
-            if status_type == "status":
-                status_name = status_obj.get("status", {}).get("name", "없음")
-                if status_name in all_statuses:
-                    all_statuses[status_name] += 1
-                else:
-                    all_statuses[status_name] = 1
-            else:
-                print(f"⚠️ 예상치 못한 상태 프로퍼티 형식: {status_type}")
-        
-        print(f"데이터베이스 내 모든 상태값 분포: {all_statuses}")
-        
-        # 필터링된 쿼리 실행
-        print("'청소 배정 필요' 상태이면서 담당자가 없는 항목 조회 중...")
         response = notion.databases.query(
             database_id=DATABASE_ID,
-            filter=filter_json,
+            filter={
+                "property": "상태",
+                "status": {
+                    "equals": "청소 배정 필요"
+                }
+            },
             sorts=[
                 {
                     "property": "청소 일정",
@@ -196,7 +162,7 @@ def get_unassigned_cleaning_tasks():
             ]
         )
         
-        print(f"노션 API 응답: 총 {len(response['results'])}개 일정 조회됨")
+        print(f"노션 응답: {len(response['results'])}건")
         
         tasks = []
         for page in response["results"]:
@@ -204,39 +170,29 @@ def get_unassigned_cleaning_tasks():
             date_data = props.get("청소 일정", {}).get("date")
             if not date_data or not date_data.get("start"):
                 continue
-                
+
             try:
-                date_str = date_data["start"]
-                date = datetime.fromisoformat(date_str)
+                date = datetime.fromisoformat(date_data["start"])
                 people = props.get("예약인원", {}).get("number", 0)
-                
-                # 이미 배정된 담당자 정보 확인
                 cleaner_items = props.get("청소 담당자", {}).get("multi_select", [])
                 cleaner_names = [item.get("name", "") for item in cleaner_items if item.get("name")]
-                current_assigned = ", ".join(cleaner_names) if cleaner_names else ""
-                
-                status = props.get("상태", {}).get("status", {}).get("name", "")
-                
-                page_id = page["id"]
-                print(f"미배정 항목: {get_korean_date(date)}, 인원: {people}명, 담당자: {current_assigned}, 상태: {status}, ID: {page_id[:8]}...")
-                
+
                 tasks.append({
-                    "date": date_str,
+                    "date": date_data["start"],
                     "formatted_date": get_korean_date(date),
                     "people": people,
-                    "page_id": page_id,
-                    "current_assigned": current_assigned
+                    "page_id": page["id"],
+                    "current_assigned": ", ".join(cleaner_names)
                 })
             except Exception as e:
-                print(f"⚠️ 미배정 일정 파싱 오류: {e}")
-        
-        print(f"최종 미배정 일정 개수: {len(tasks)}개")
-        print("===== 미배정 청소 일정 가져오기 완료 =====\n")
+                print(f"⚠️ 파싱 오류: {e}")
+
+        print(f"최종 반환: {len(tasks)}건")
+        print("===== 완료 =====\n")
         return tasks
+
     except Exception as e:
-        print(f"❌ 노션 API 호출 오류: {e}")
-        print(f"오류 세부 정보: {str(e)}")
-        print("===== 미배정 청소 일정 가져오기 실패 =====\n")
+        print(f"❌ 오류 발생: {e}")
         return []
 
 # 주간 일정 가져오기
